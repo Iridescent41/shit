@@ -1,0 +1,213 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>数字华容道</title>
+<meta http-equiv="content-type" content="text/html; charset=gb2312">
+<script type="text/javascript" src="../../css/jquery-last.js"></script>
+<script type="text/javascript" src="../../css/cookie.js"></script>
+<script type="text/javascript" src="../../css/common_jq.js"></script>
+<style>
+.szhrdbox {
+	BORDER: #666 2px solid;
+	TABLE-LAYOUT: fixed; 
+	VERTICAL-ALIGN: middle; WIDTH: 320px; HEIGHT: 320px; 
+	BORDER-COLLAPSE: collapse;
+	background:#333;
+}
+DIV.normal {
+	width:74px;
+	height:74px;
+	border-collapse:collapse;
+	border:#333 3px solid;
+	background: #EEE;
+	color:#000;
+	overflow: hidden;
+	font-size: 64px;
+	text-align: center;
+	line-height:80px;
+	vertical-align:middle;
+	float: left;
+}
+DIV.blk {background:#333;}
+</style>
+
+<script type="text/javascript">
+
+var ti=[15,14,3,4,9,5,13,6,11,1,12,8,7,10,2,0];
+var ost = new Array("←","→","↑","↓","×");
+var ansstr = new Array();
+var v=4;
+var s=0;
+var stp="";
+var astp = new Array('0','1','2','4','5','6','8','9','a','c','d','e');
+function drawhrd()
+{
+	msg = "";
+	$.each(ti,function(i,n){
+		if(n != 0)msg+="<div class=normal id=k"+i+" onmousedown='javascript:imove("+i+")'>"+n+"</div>";
+		else      msg+="<div class='blk normal' id=k"+i+"></div>";
+	});
+	$(".szhrdbox").html(msg);
+
+}
+function goback()
+{
+	if(stp.length == 0)return false;
+	way =stp.substr(stp.length-1,1);
+	stp =stp.substr(0,stp.length-1);
+	for(var i=0;i<16;i++)if(ti[i]==0){plc = i;break;}
+	switch(way)
+	{
+		case '6':ti[plc]=ti[plc+1];ti[plc+1]=0;plc+=1;
+		case '5':ti[plc]=ti[plc+1];ti[plc+1]=0;plc+=1;
+		case '4':ti[plc]=ti[plc+1];ti[plc+1]=0;plc+=1;
+			break;
+		case '2':ti[plc]=ti[plc-1];ti[plc-1]=0;plc-=1;	
+		case '1':ti[plc]=ti[plc-1];ti[plc-1]=0;plc-=1;	
+		case '0':ti[plc]=ti[plc-1];ti[plc-1]=0;plc-=1;	
+			break;
+		case 'e':ti[plc]=ti[plc+4];ti[plc+4]=0;plc+=4;
+		case 'd':ti[plc]=ti[plc+4];ti[plc+4]=0;plc+=4;	
+		case 'c':ti[plc]=ti[plc+4];ti[plc+4]=0;plc+=4;	
+			break;
+		case 'a':ti[plc]=ti[plc-4];ti[plc-4]=0;plc-=4;		
+		case '9':ti[plc]=ti[plc-4];ti[plc-4]=0;plc-=4;		
+		case '8':ti[plc]=ti[plc-4];ti[plc-4]=0;plc-=4;		
+			break;
+	}
+	drawhrd();
+}
+function imove(id)
+{
+	canmove(id);
+	if(v != 4)
+	{
+		switch(v)
+		{
+			case 0:
+				for(i=0;i<s;i++){ti[id-s+i]=ti[id-s+i+1];ti[id-s+i+1]=0;}
+				break;	
+			case 1:
+				for(i=0;i<s;i++){ti[id+s-i]=ti[id+s-i-1];ti[id+s-i-1]=0;}
+				break;	
+			case 2:
+				for(i=0;i<s;i++){ti[id-s*4+i*4]=ti[id-s*4+i*4+4];ti[id-s*4+i*4+4]=0;}
+				break;	
+			case 3:
+				for(i=0;i<s;i++){ti[id+s*4-i*4]=ti[id+s*4-i*4-4];ti[id+s*4-i*4-4]=0;}
+				break;	
+		}
+		drawhrd();
+	
+		stp+=astp[v*3+s-1];
+		//if fine
+		fine = true;
+		for(i=0;i<15;i++)if(ti[i] != i+1){fine=false;break;}
+		if(fine)
+		{
+			//alert("OK"+stp);
+			$.post("szhrd.fine.php",{"ans":stp},function(msg){
+				var cmd = msg.substr(0,1);
+				var html= msg.substr(1);
+				if(cmd == 'E')
+				{
+					$("#sub").css({background:"red",color:"white"});
+				}else if(cmd == 'M')
+				{
+					$("#sub").css({background:"blue",color:"white"});
+				}else
+				{
+					$("#sub").css({background:"green",color:"white"});
+					
+				}
+				$("#sub").html("&nbsp;<br><strong>"+html+"</strong><br>&nbsp;");	
+			});
+		}
+	}
+}
+function canmove(id)
+{
+	if(ti[id] == 0)
+	{
+		v=4;
+	}else
+	{
+		for(var i=0;i<16;i++)if(ti[i]==0)break;
+		plc0=i;
+		
+		if(id%4 == plc0%4)
+		{
+			if(plc0>id)		//下
+			{
+				v=3;
+				s=(plc0-id)/4;
+			}else			//上
+			{
+				v=2;
+				s=(id-plc0)/4;
+			}
+		} else if(id-id%4 == plc0-plc0%4)
+		{
+			if(plc0>id)		//右
+			{
+				v=1;
+				s=plc0-id;
+			}else			//左
+			{
+				v=0;
+				s=id-plc0;
+			}
+		}else
+		{
+			v=4;
+		}
+	}
+	//alert(v+","+s);
+	return false;
+}
+
+$(document).ready(function(){
+
+	//去掉右键菜单、拖拽、文本选择
+	$(".szhrdbox")[0].oncontextmenu = function () { return false; };
+	$(".szhrdbox")[0].ondragstart = function () { return false; };
+	$(".szhrdbox")[0].onselect = function(){ return false; };
+
+	//
+	drawhrd();
+
+	$("form").submit(function(){
+	});
+
+});
+
+</script>
+
+
+
+</head>
+<body>
+<div align=center>
+
+<div class=szhrdbox>
+</div>
+
+<br style='clear:both'/>
+
+<div>
+	<input type=button value=' ← ' onclick="javascript:goback();">
+</div>
+
+<!-- 提交结果 -->
+<br style='clear:both'/>
+<div id=sub  style='width:320px; text-align:left;'></div>
+
+<br style='clear:both'/>
+<div style='width:320px; text-align:left;'>
+数字华荣道：移动方块，回到从小到大排列<br>
+</div>
+
+</div>
+</body>
+</html> 
